@@ -1,117 +1,73 @@
 const std = @import("std");
+const utils = @import("utils.zig");
+
+const day_modules = [25]type{
+    @import("days/day_01.zig"),
+    @import("days/day_02.zig"),
+    @import("days/day_03.zig"),
+    @import("days/day_04.zig"),
+    @import("days/day_05.zig"),
+    @import("days/day_06.zig"),
+    @import("days/day_07.zig"),
+    @import("days/day_08.zig"),
+    @import("days/day_09.zig"),
+    @import("days/day_10.zig"),
+    @import("days/day_11.zig"),
+    @import("days/day_12.zig"),
+    @import("days/day_13.zig"),
+    @import("days/day_14.zig"),
+    @import("days/day_15.zig"),
+    @import("days/day_16.zig"),
+    @import("days/day_17.zig"),
+    @import("days/day_18.zig"),
+    @import("days/day_19.zig"),
+    @import("days/day_20.zig"),
+    @import("days/day_21.zig"),
+    @import("days/day_22.zig"),
+    @import("days/day_23.zig"),
+    @import("days/day_24.zig"),
+    @import("days/day_25.zig"),
+};
 
 const stdout = std.io.getStdOut().writer();
 const test_allocator = std.testing.allocator;
-
-fn readInput(allocator: std.mem.Allocator, input_file_path: []const u8) ![]u8 {
-    var file = try std.fs.cwd().openFile(input_file_path, .{});
-    defer file.close();
-
-    const file_stat = try file.stat();
-    const file_contents = try file.readToEndAlloc(allocator, file_stat.size);
-
-    return file_contents;
-}
-
-fn parseLines(allocator: std.mem.Allocator, input: []const u8) !struct { std.ArrayList(u32), std.ArrayList(u32) } {
-    var list1 = std.ArrayList(u32).init(allocator);
-    var list2 = std.ArrayList(u32).init(allocator);
-    errdefer {
-        list1.deinit();
-        list2.deinit();
-    }
-    var line_iter = std.mem.tokenizeScalar(u8, input, '\n');
-    while (line_iter.next()) |line| {
-        var item_iter = std.mem.tokenizeScalar(u8, line, ' ');
-        const num1 = try std.fmt.parseInt(u32, item_iter.next().?, 10);
-        const num2 = try std.fmt.parseInt(u32, item_iter.next().?, 10);
-        try list1.append(num1);
-        try list2.append(num2);
-    }
-    return .{ list1, list2 };
-}
-
-fn day1Part1(allocator: std.mem.Allocator, input: []const u8) !u32 {
-    var list1, var list2 = try parseLines(allocator, input);
-    defer {
-        list1.deinit();
-        list2.deinit();
-    }
-
-    std.mem.sort(u32, list1.items, {}, std.sort.asc(u32));
-    std.mem.sort(u32, list2.items, {}, std.sort.asc(u32));
-
-    var sum_of_diffs: u32 = 0;
-    for (list1.items, list2.items) |num1, num2| {
-        const abs_diff = if (num1 > num2) num1 - num2 else num2 - num1;
-        sum_of_diffs += abs_diff;
-    }
-
-    return sum_of_diffs;
-}
-
-fn day1Part2(allocator: std.mem.Allocator, input: []const u8) !u32 {
-    var list1, var list2 = try parseLines(allocator, input);
-    defer {
-        list1.deinit();
-        list2.deinit();
-    }
-
-    var counts = std.AutoHashMap(u32, u32).init(allocator);
-    defer counts.deinit();
-
-    for (list2.items) |num| {
-        if (counts.get(num)) |v| {
-            try counts.put(num, v + 1);
-        } else {
-            try counts.put(num, 1);
-        }
-    }
-
-    var sum: u32 = 0;
-    for (list1.items) |num| {
-        if (counts.get(num)) |v| {
-            sum += num * v;
-        }
-    }
-
-    return sum;
-}
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
-    const input = try readInput(allocator, "inputs/day_01.txt");
+    const args = try std.process.argsAlloc(allocator);
+    defer std.process.argsFree(allocator, args);
+
+    if (args.len < 2) {
+        try stdout.print("Give day number as an argument\n", .{});
+        return;
+    }
+
+    const day = try std.fmt.parseInt(i32, args[1], 10);
+    if (day <= 0 or day > 25) {
+        try stdout.print("Day should be between 1 and 25.\n", .{});
+        return;
+    }
+
+    const input_path = try std.fmt.allocPrint(allocator, "inputs/day_{:0>2}.txt", .{@as(usize, @intCast(day))});
+    defer allocator.free(input_path);
+    const input = utils.readInput(allocator, input_path) catch |err| switch (err) {
+        error.FileNotFound => {
+            try stdout.print("No input file for day {d}\n", .{day});
+            return;
+        },
+        else => |other_error| return other_error,
+    };
     defer allocator.free(input);
 
-    const answer1 = try day1Part1(allocator, input);
-    try stdout.print("Answer to day 1 part 1 is {any}\n", .{answer1});
-
-    const answer2 = try day1Part2(allocator, input);
-    try stdout.print("Answer to day 1 part 2 is {any}\n", .{answer2});
-}
-
-test "test day1 part1" {
-    const input =
-        \\3   4
-        \\4   3
-        \\2   5
-        \\1   3
-        \\3   9
-        \\3   3
-    ;
-    try std.testing.expectEqual(11, try day1Part1(test_allocator, input));
-}
-
-test "test day1 part2" {
-    const input =
-        \\3   4
-        \\4   3
-        \\2   5
-        \\1   3
-        \\3   9
-        \\3   3
-    ;
-    try std.testing.expectEqual(31, try day1Part2(test_allocator, input));
+    inline for (0..25) |d| {
+        if ((day - 1) == d) {
+            const day_module = day_modules[d];
+            const answer1 = try day_module.part1(allocator, input);
+            try stdout.print("Answer to day {d} part 1 is {any}\n", .{ day, answer1 });
+            const answer2 = try day_module.part2(allocator, input);
+            try stdout.print("Answer to day {d} part 2 is {any}\n", .{ day, answer2 });
+        }
+    }
 }
