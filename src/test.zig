@@ -24,4 +24,5 @@ comptime {
     _ = @import("days/day_23.zig");
     _ = @import("days/day_24.zig");
     _ = @import("days/day_25.zig");
+    _ = @import("utils.zig");
 }
