@@ -33,6 +33,15 @@ pub fn read_num(seq: []const u8) !struct { usize, ?u32 } {
     return .{ ind, num };
 }
 
+pub fn parseIntArray(comptime T: type, allocator: std.mem.Allocator, buf: []const u8, sep: u8) !std.ArrayList(T) {
+    var array = std.ArrayList(T).init(allocator);
+    var items = std.mem.splitScalar(u8, buf, sep);
+    while (items.next()) |page| {
+        try array.append(try std.fmt.parseInt(u32, page, 10));
+    }
+    return array;
+}
+
 pub fn Matrix(comptime T: type) type {
     return struct {
         items: []T,
