@@ -42,6 +42,37 @@ pub fn parseIntArray(comptime T: type, allocator: std.mem.Allocator, buf: []cons
     return array;
 }
 
+pub fn Point(comptime T: type) type {
+    return struct { x: T, y: T };
+}
+
+pub const Direction = enum {
+    up,
+    down,
+    left,
+    right,
+
+    const Self = @This();
+
+    pub fn offset(self: Self) Point(i32) {
+        return switch (self) {
+            Direction.up => .{ .x = 0, .y = -1 },
+            Direction.down => .{ .x = 0, .y = 1 },
+            Direction.left => .{ .x = -1, .y = 0 },
+            Direction.right => .{ .x = 1, .y = 0 },
+        };
+    }
+
+    pub fn turnRight(self: Self) Self {
+        return switch (self) {
+            Direction.up => Direction.right,
+            Direction.right => Direction.down,
+            Direction.down => Direction.left,
+            Direction.left => Direction.up,
+        };
+    }
+};
+
 pub fn Matrix(comptime T: type) type {
     return struct {
         items: []T,
