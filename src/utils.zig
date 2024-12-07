@@ -35,12 +35,53 @@ pub fn read_num(seq: []const u8) !struct { usize, ?u32 } {
 
 pub fn parseIntArray(comptime T: type, allocator: std.mem.Allocator, buf: []const u8, sep: u8) !std.ArrayList(T) {
     var array = std.ArrayList(T).init(allocator);
+    errdefer array.deinit();
     var items = std.mem.splitScalar(u8, buf, sep);
     while (items.next()) |page| {
         try array.append(try std.fmt.parseInt(u32, page, 10));
     }
     return array;
 }
+
+pub fn Point(comptime T: type) type {
+    return struct {
+        x: T,
+        y: T,
+
+        const Self = @This();
+
+        pub fn equal(self: Self, other: Self) bool {
+            return self.x == other.x and self.y == other.y;
+        }
+    };
+}
+
+pub const Direction = enum {
+    up,
+    down,
+    left,
+    right,
+
+    const Self = @This();
+
+    pub fn offset(self: Self) Point(i32) {
+        return switch (self) {
+            Direction.up => .{ .x = 0, .y = -1 },
+            Direction.down => .{ .x = 0, .y = 1 },
+            Direction.left => .{ .x = -1, .y = 0 },
+            Direction.right => .{ .x = 1, .y = 0 },
+        };
+    }
+
+    pub fn turnRight(self: Self) Self {
+        return switch (self) {
+            Direction.up => Direction.right,
+            Direction.right => Direction.down,
+            Direction.down => Direction.left,
+            Direction.left => Direction.up,
+        };
+    }
+};
 
 pub fn Matrix(comptime T: type) type {
     return struct {
@@ -71,6 +112,7 @@ pub fn Matrix(comptime T: type) type {
             var n_rows: usize = 0;
             var n_cols: usize = 0;
             var items = std.ArrayList(T).init(allocator);
+            errdefer items.deinit();
             var line_iter = std.mem.tokenizeScalar(u8, string, '\n');
             while (line_iter.next()) |line| {
                 if (line.len > n_cols) {
