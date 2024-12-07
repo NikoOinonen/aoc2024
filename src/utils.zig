@@ -37,8 +37,8 @@ pub fn parseIntArray(comptime T: type, allocator: std.mem.Allocator, buf: []cons
     var array = std.ArrayList(T).init(allocator);
     errdefer array.deinit();
     var items = std.mem.splitScalar(u8, buf, sep);
-    while (items.next()) |page| {
-        try array.append(try std.fmt.parseInt(u32, page, 10));
+    while (items.next()) |item| {
+        try array.append(try std.fmt.parseInt(u32, item, 10));
     }
     return array;
 }
