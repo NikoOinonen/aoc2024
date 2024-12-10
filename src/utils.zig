@@ -53,6 +53,14 @@ pub fn Point(comptime T: type) type {
         pub fn equal(self: Self, other: Self) bool {
             return self.x == other.x and self.y == other.y;
         }
+
+        pub fn add(self: Self, other: Self) Self {
+            return Self{ .x = self.x + other.x, .y = self.y + other.y };
+        }
+
+        pub fn isWithin(self: Self, min: Self, max: Self) bool {
+            return self.x >= min.x and self.x <= max.x and self.y >= min.y and self.y <= max.y;
+        }
     };
 }
 
