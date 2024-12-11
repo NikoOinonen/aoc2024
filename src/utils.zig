@@ -33,6 +33,11 @@ pub fn read_num(seq: []const u8) !struct { usize, ?u32 } {
     return .{ ind, num };
 }
 
+test "read_num" {
+    const seq = "234sd4";
+    try std.testing.expectEqual(.{ 3, 234 }, try read_num(seq));
+}
+
 pub fn parseIntArray(comptime T: type, allocator: std.mem.Allocator, buf: []const u8, sep: u8) !std.ArrayList(T) {
     var array = std.ArrayList(T).init(allocator);
     errdefer array.deinit();
@@ -158,7 +163,71 @@ pub fn Matrix(comptime T: type) type {
     };
 }
 
-test "read_num" {
-    const seq = "234sd4";
-    try std.testing.expectEqual(.{ 3, 234 }, try read_num(seq));
+pub fn ArrayLinkedList(comptime T: type) type {
+    return struct {
+        _head: ?usize = null,
+        node_array: std.ArrayList(Node),
+        allocator: Allocator,
+
+        const Node = struct {
+            data: T,
+            _next: ?usize = null,
+        };
+
+        const Self = @This();
+
+        pub fn init(allocator: Allocator) Self {
+            const node_array = std.ArrayList(Node).init(allocator);
+            return .{ .node_array = node_array, .allocator = allocator };
+        }
+
+        pub fn deinit(self: *Self) void {
+            self.node_array.deinit();
+            self._head = null;
+        }
+
+        pub fn head(self: Self) ?*Node {
+            if (self._head) |h| {
+                return &self.node_array.items[h];
+            } else {
+                return null;
+            }
+        }
+
+        pub fn next(self: Self, node: *Node) ?*Node {
+            if (node._next) |n| {
+                return &self.node_array.items[n];
+            } else {
+                return null;
+            }
+        }
+
+        pub fn prepend(self: *Self, data: T) !*Node {
+            var new_node = Node{ .data = data, ._next = self._head };
+            self._head = self.node_array.items.len;
+            try self.node_array.append(new_node);
+            return &new_node;
+        }
+
+        pub fn insertAfter(self: *Self, node: *Node, data: T) !*Node {
+            var new_node = Node{ .data = data, ._next = node._next };
+            node._next = self.node_array.items.len;
+            try self.node_array.append(new_node);
+            return &new_node;
+        }
+
+        pub fn debugPrintData(self: Self) !void {
+            var node = self.head();
+            while (node) |n| {
+                try std.fmt.formatInt(n.data, 10, std.fmt.Case.lower, .{}, stderr);
+                _ = try stderr.write(" ");
+                node = n.next();
+            }
+            _ = try stderr.write("\n");
+        }
+
+        pub fn len(self: Self) usize {
+            return self.node_array.items.len;
+        }
+    };
 }
