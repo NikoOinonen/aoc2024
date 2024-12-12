@@ -94,6 +94,15 @@ pub const Direction = enum {
             Direction.left => Direction.up,
         };
     }
+
+    pub fn turnLeft(self: Self) Self {
+        return switch (self) {
+            Direction.up => Direction.left,
+            Direction.left => Direction.down,
+            Direction.down => Direction.right,
+            Direction.right => Direction.up,
+        };
+    }
 };
 
 pub fn Matrix(comptime T: type) type {
