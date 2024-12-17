@@ -65,9 +65,17 @@ pub fn main() !void {
         if ((day - 1) == d) {
             const day_module = day_modules[d];
             const answer1 = try day_module.part1(allocator, input);
-            try stdout.print("Answer to day {d} part 1 is {any}\n", .{ day, answer1 });
+            if (@TypeOf(answer1) == []u8) {
+                try stdout.print("Answer to day {d} part 1 is {s}\n", .{ day, answer1 });
+            } else {
+                try stdout.print("Answer to day {d} part 1 is {any}\n", .{ day, answer1 });
+            }
             const answer2 = try day_module.part2(allocator, input);
-            try stdout.print("Answer to day {d} part 2 is {any}\n", .{ day, answer2 });
+            if (@TypeOf(answer2) == []u8) {
+                try stdout.print("Answer to day {d} part 2 is {s}\n", .{ day, answer2 });
+            } else {
+                try stdout.print("Answer to day {d} part 2 is {any}\n", .{ day, answer2 });
+            }
         }
     }
 }
